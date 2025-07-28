@@ -1,6 +1,6 @@
 import express from "express";
 import { createServer } from "http";
-import { WebSocketServer } from "ws";
+import { WebSocketServer, WebSocket } from "ws";
 import bodyParser from "body-parser";
 import { getNodeSchemaFromPrompt } from "./modelAdapter";
 
@@ -54,5 +54,5 @@ return res.status(500).json({ error: "Failed to generate node schema" });
 });
 
 server.listen(PORT, () => {
-console.log(MCP server listening on http://localhost:${PORT});
+console.log(`MCP server listening on http://localhost:${PORT}`);
 });
