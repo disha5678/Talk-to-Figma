@@ -1,15 +1,19 @@
-<!DOCTYPE html> <html> <head> <meta charset="utf-8" /> 
-    <title>AI Design Generator</title> 
-</head> 
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>AI Design Generator</title>
+</head>
 <body>
-     <h3>AI Design Generator</h3> 
-     <textarea id="prompt" placeholder="Enter prompt..."></textarea> 
-     <button id="generate">Generate</button>
+  <h3>AI Design Generator</h3>
+  <textarea id="prompt" placeholder="Enter prompt..."></textarea>
+  <button id="generate">Generate</button>
 
-<script>
-  document.getElementById('generate').onclick = () => {
-    const prompt = document.getElementById('prompt').value;
-    parent.postMessage({ pluginMessage: { type: 'generate', prompt } }, '*');
-  };
-</script>
-</body> </html>
+  <script>
+    document.getElementById('generate').onclick = () => {
+      const prompt = document.getElementById('prompt').value;
+      parent.postMessage({ pluginMessage: { type: 'generate', prompt } }, '*');
+    };
+  </script>
+</body>
+</html>
