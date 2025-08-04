@@ -1,39 +1,30 @@
-import { config } from "dotenv";
-config();
-import { OpenAI } from "openai";
+// mcp-server/modelAdapter.ts
+import OpenAI from "openai";
+import dotenv from "dotenv";
+dotenv.config();
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-
-export async function getModelResponse(prompt: string) {
-const systemPrompt = `
-You are an AI design assistant. Given a user prompt, return a JSON schema representing UI components in Figma.
-
-Format:
-{
-"type": "text" | "rectangle" | "frame",
-"properties": {
-...
-}
-}
-`;
-
-const completion = await openai.chat.completions.create({
-model: "gpt-4",
-messages: [
-{ role: "system", content: systemPrompt },
-{ role: "user", content: prompt }
-],
-temperature: 0.7
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
-const response = completion.choices[0]?.message?.content;
+export async function getModelResponse(messages: any[]) {
+  const completion = await openai.chat.completions.create({
+    model: "gpt-4o-mini", // or "gpt-4" if available
+    messages: [
+      {
+        role: "system",
+        content: "You are a UI generator that outputs JSON describing Figma nodes.",
+      },
+      ...messages,
+    ],
+  });
 
-if (!response) throw new Error("No response from OpenAI");
+  const rawText = completion.choices[0].message?.content || "";
 
-try {
-const parsed = JSON.parse(response);
-return parsed;
-} catch (err) {
-throw new Error("Invalid JSON returned by OpenAI");
-}
+  try {
+    return JSON.parse(rawText); // Expecting GPT to output JSON
+  } catch {
+    console.error("Model did not return valid JSON. Wrapping raw output.");
+    return { type: "FRAME", children: [], rawOutput: rawText };
+  }
 }
