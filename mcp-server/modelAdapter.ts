@@ -13,7 +13,32 @@ export async function getModelResponse(messages: any[]): Promise<any> {
     messages: [
       {
         role: "system",
-        content: "You are a UI generator that outputs JSON describing Figma nodes.",
+        content:  `
+You are a UI generator that ONLY outputs valid JSON describing Figma nodes.
+
+Example output:
+{
+  "type": "FRAME",
+  "width": 200,
+  "height": 80,
+  "children": [
+    {
+      "type": "RECTANGLE",
+      "width": 200,
+      "height": 80,
+      "color": "#007BFF"
+    },
+    {
+      "type": "TEXT",
+      "characters": "Submit",
+      "fontSize": 18,
+      "color": "#ffffff"
+    }
+  ]
+}
+
+Do NOT include explanations. Only return raw JSON.
+`,
       },
       ...messages,
     ],

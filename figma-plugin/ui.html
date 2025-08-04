@@ -10,10 +10,17 @@
   <button id="generate">Generate</button>
 
   <script>
-    document.getElementById('generate').onclick = () => {
-      const prompt = document.getElementById('prompt').value;
-      parent.postMessage({ pluginMessage: { type: 'generate', prompt } }, '*');
-    };
-  </script>
+  const socket = new WebSocket("ws://localhost:3001");
+
+  document.getElementById("generate").onclick = () => {
+    const prompt = document.getElementById("prompt").value;
+    socket.send(prompt);
+  };
+
+  socket.onmessage = (event) => {
+    const schema = event.data;
+    parent.postMessage({ pluginMessage: { type: "schema", schema } }, "*");
+  };
+</script>
 </body>
 </html>
