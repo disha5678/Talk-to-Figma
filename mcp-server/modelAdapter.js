@@ -35,42 +35,52 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from, pack) {
+    if (pack || arguments.length === 2) for (var i = 0, l = from.length, ar; i < l; i++) {
+        if (ar || !(i in from)) {
+            if (!ar) ar = Array.prototype.slice.call(from, 0, i);
+            ar[i] = from[i];
+        }
+    }
+    return to.concat(ar || Array.prototype.slice.call(from));
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getNodeSchemaFromPrompt = getNodeSchemaFromPrompt;
-var dotenv_1 = require("dotenv");
-(0, dotenv_1.config)();
-var openai_1 = require("openai");
-var openai = new openai_1.OpenAI({ apiKey: process.env.OPENAI_API_KEY });
-function getNodeSchemaFromPrompt(prompt) {
+exports.getModelResponse = getModelResponse;
+// mcp-server/modelAdapter.ts
+var OpenAI = require("openai");
+var dotenv = require("dotenv");
+dotenv.config();
+var openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+});
+function getModelResponse(messages) {
     return __awaiter(this, void 0, void 0, function () {
-        var systemPrompt, completion, response, parsed;
-        var _a, _b;
-        return __generator(this, function (_c) {
-            switch (_c.label) {
-                case 0:
-                    systemPrompt = "\nYou are an AI design assistant. Given a user prompt, return a JSON schema representing UI components in Figma.\n\nFormat:\n{\n\"type\": \"text\" | \"rectangle\" | \"frame\",\n\"properties\": {\n...\n}\n}\n";
-                    return [4 /*yield*/, openai.chat.completions.create({
-                            model: "gpt-4",
-                            messages: [
-                                { role: "system", content: systemPrompt },
-                                { role: "user", content: prompt }
-                            ],
-                            temperature: 0.7
-                        })];
+        var completion, rawText;
+        var _a;
+        return __generator(this, function (_b) {
+            switch (_b.label) {
+                case 0: return [4 /*yield*/, openai.chat.completions.create({
+                        model: "gpt-4o", // or "gpt-4" if available
+                        messages: __spreadArray([
+                            {
+                                role: "system",
+                                content: "You are a UI generator that outputs JSON describing Figma nodes.",
+                            }
+                        ], messages, true),
+                    })];
                 case 1:
-                    completion = _c.sent();
-                    response = (_b = (_a = completion.choices[0]) === null || _a === void 0 ? void 0 : _a.message) === null || _b === void 0 ? void 0 : _b.content;
-                    if (!response)
-                        throw new Error("No response from OpenAI");
+                    completion = _b.sent();
+                    rawText = ((_a = completion.choices[0].message) === null || _a === void 0 ? void 0 : _a.content) || "";
                     try {
-                        parsed = JSON.parse(response);
-                        return [2 /*return*/, parsed];
+                        return [2 /*return*/, JSON.parse(rawText)]; // Expecting GPT to output JSON
                     }
-                    catch (err) {
-                        throw new Error("Invalid JSON returned by OpenAI");
+                    catch (_c) {
+                        console.error("Model did not return valid JSON. Wrapping raw output.");
+                        return [2 /*return*/, { type: "FRAME", children: [], rawOutput: rawText }];
                     }
                     return [2 /*return*/];
             }
         });
     });
 }
+module.exports = { getModelResponse: getModelResponse };

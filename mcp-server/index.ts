@@ -1,9 +1,10 @@
 // mcp-server/index.ts
+
 import express from "express";
 import { WebSocketServer } from "ws";
 import dotenv from "dotenv";
 import cors from "cors";
-import { getModelResponse } from "./modelAdapter";
+const { getModelResponse } = require("./modelAdapter");
 import { addMessage, getContext, clearContext } from "./contextManager";
 
 dotenv.config();
@@ -56,6 +57,8 @@ wss.on("connection", (ws) => {
 
 // 📌 REST Endpoint for /generate (optional for HTTP clients)
 import type { Request, Response } from "express";
+
+
 app.post("/generate", async (req: Request, res: Response) => {
   const { prompt } = req.body;
   if (!prompt) return res.status(400).json({ error: "Prompt is required" });

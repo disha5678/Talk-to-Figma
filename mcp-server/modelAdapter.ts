@@ -1,15 +1,15 @@
 // mcp-server/modelAdapter.ts
-import OpenAI from "openai";
-import dotenv from "dotenv";
+const OpenAI = require ("openai");
+const dotenv = require("dotenv");
 dotenv.config();
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function getModelResponse(messages: any[]) {
+export async function getModelResponse(messages: any[]): Promise<any> {
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini", // or "gpt-4" if available
+    model: "gpt-4o", // or "gpt-4" if available
     messages: [
       {
         role: "system",
@@ -28,3 +28,5 @@ export async function getModelResponse(messages: any[]) {
     return { type: "FRAME", children: [], rawOutput: rawText };
   }
 }
+
+module.exports = { getModelResponse };
