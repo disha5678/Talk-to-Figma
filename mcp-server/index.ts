@@ -1,58 +1,76 @@
+// mcp-server/index.ts
 import express from "express";
-import { createServer } from "http";
-import { WebSocketServer, WebSocket } from "ws";
-import bodyParser from "body-parser";
-import { getNodeSchemaFromPrompt } from "./modelAdapter";
+import { WebSocketServer } from "ws";
+import dotenv from "dotenv";
+import cors from "cors";
+import { getModelResponse } from "./modelAdapter";
+import { addMessage, getContext, clearContext } from "./contextManager";
+
+dotenv.config();
 
 const app = express();
-const server = createServer(app);
-const wss = new WebSocketServer({ server });
+app.use(cors());
+app.use(express.json());
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
-// Store all WebSocket clients
+// Store connected WebSocket clients
+import type { WebSocket } from "ws";
 const clients: Set<WebSocket> = new Set();
 
+// 🚀 WebSocket Server
+const server = app.listen(PORT, () =>
+  console.log(`MCP Server running on port ${PORT}`)
+);
+
+const wss = new WebSocketServer({ server });
+
 wss.on("connection", (ws) => {
-console.log("Client connected via WebSocket");
-clients.add(ws);
+  const clientId = Date.now().toString();
+  console.log("WebSocket connected:", clientId);
+  clients.add(ws);
 
-ws.on("close", () => {
-console.log("Client disconnected");
-clients.delete(ws);
+  ws.on("message", async (message) => {
+    const prompt = message.toString();
+    console.log(`Prompt from ${clientId}:`, prompt);
+
+    // Save to memory
+    addMessage(clientId, "user", prompt);
+
+    // Get model output
+    const figmaSchema = await getModelResponse(getContext(clientId));
+
+    // Save AI response
+    addMessage(clientId, "assistant", JSON.stringify(figmaSchema));
+
+    // Send back only to this client
+    ws.send(JSON.stringify(figmaSchema));
+  });
+
+  ws.on("close", () => {
+    console.log("WebSocket disconnected:", clientId);
+    clearContext(clientId);
+    clients.delete(ws);
+  });
 });
-});
 
-// Parse JSON bodies
-app.use(bodyParser.json());
+// 📌 REST Endpoint for /generate (optional for HTTP clients)
+import type { Request, Response } from "express";
+app.post("/generate", async (req: Request, res: Response) => {
+  const { prompt } = req.body;
+  if (!prompt) return res.status(400).json({ error: "Prompt is required" });
 
-// POST /generate
-app.post("/generate", async (req, res) => {
-const { prompt } = req.body;
+  // TEMP clientId for HTTP
+  const clientId = "http_" + Date.now();
+  addMessage(clientId, "user", prompt);
 
-if (!prompt) {
-return res.status(400).json({ error: "Missing prompt" });
-}
+  const figmaSchema = await getModelResponse(getContext(clientId));
+  addMessage(clientId, "assistant", JSON.stringify(figmaSchema));
 
-try {
-const schema = await getNodeSchemaFromPrompt(prompt);
-
-
-// Broadcast to all connected clients
-const payload = JSON.stringify({ type: "generated", prompt, schema });
-for (const client of clients) {
-  if (client.readyState === client.OPEN) {
-    client.send(payload);
+  // Broadcast to all WebSocket clients (e.g., Figma & Web UI)
+  for (const client of clients) {
+    client.send(JSON.stringify(figmaSchema));
   }
-}
 
-return res.json({ status: "broadcasted", schema });
-} catch (err) {
-console.error("Error in /generate:", err);
-return res.status(500).json({ error: "Failed to generate node schema" });
-}
-});
-
-server.listen(PORT, () => {
-console.log(`MCP server listening on http://localhost:${PORT}`);
+  res.json({ figmaSchema });
 });

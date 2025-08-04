@@ -4,7 +4,7 @@ import { OpenAI } from "openai";
 
 const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-export async function getNodeSchemaFromPrompt(prompt: string) {
+export async function getModelResponse(prompt: string) {
 const systemPrompt = `
 You are an AI design assistant. Given a user prompt, return a JSON schema representing UI components in Figma.
 
