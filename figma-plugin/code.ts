@@ -17,3 +17,4 @@ figma.ui.onmessage = async (msg) => {
     figma.closePlugin("Generated node from prompt");
   }
 };
+

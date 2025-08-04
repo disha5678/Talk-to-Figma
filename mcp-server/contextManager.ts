@@ -18,3 +18,6 @@ export function getContext(clientId: string) {
 export function clearContext(clientId: string) {
   contextMap.delete(clientId);
 }
+export function getClientCount() {
+  return contextMap.size;
+}
